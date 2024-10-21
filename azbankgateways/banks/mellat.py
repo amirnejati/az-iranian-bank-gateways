@@ -11,6 +11,8 @@ from azbankgateways.models import BankType, CurrencyEnum, PaymentStatus
 
 
 class Mellat(BaseBank):
+    _payment_url = None
+    _wsdl_url = None
     _terminal_code = None
     _username = None
     _password = None
@@ -18,7 +20,8 @@ class Mellat(BaseBank):
     def __init__(self, **kwargs):
         super(Mellat, self).__init__(**kwargs)
         self.set_gateway_currency(CurrencyEnum.IRR)
-        self._payment_url = "https://bpm.shaparak.ir/pgwchannel/startpay.mellat"
+        self._payment_url = kwargs.get("PAYMENT_URL") or "https://bpm.shaparak.ir/pgwchannel/startpay.mellat"
+        self._wsdl_url = kwargs.get("WSDL_URL") or "https://bpm.shaparak.ir/pgwchannel/services/pgw?wsdl"
 
     def get_bank_type(self):
         return BankType.MELLAT
@@ -248,10 +251,9 @@ class Mellat(BaseBank):
         else:
             logging.debug("Mellat gateway did not settle the payment")
 
-    @staticmethod
-    def _get_client():
-        transport = Transport(timeout=5, operation_timeout=5)
-        client = Client("https://bpm.shaparak.ir/pgwchannel/services/pgw?wsdl", transport=transport)
+    def _get_client(self):
+        transport = Transport(timeout=7, operation_timeout=7)
+        client = Client(self._wsdl_url, transport=transport)
         return client
 
     @staticmethod
